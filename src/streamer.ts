@@ -1,3 +1,4 @@
+import { getWebSocketUrl } from './ws-url';
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface StreamerOptions {
@@ -20,9 +21,7 @@ export class WebSocketStreamer {
 
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Connect through Vite's proxy (/ws) to support WSS over HTTPS secure context
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = getWebSocketUrl();
       
       this.ws = new WebSocket(wsUrl);
       this.ws.binaryType = 'arraybuffer';

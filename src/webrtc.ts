@@ -1,3 +1,4 @@
+import { getWebSocketUrl } from './ws-url';
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface WebRTCManagerOptions {
@@ -43,8 +44,7 @@ export class WebRTCManager {
 
   public connectSignaling(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = getWebSocketUrl();
       
       this.ws = new WebSocket(wsUrl);
 

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
+  base: '/qr-web-streamer/',
   plugins: [basicSsl()],
   server: {
     host: true,
