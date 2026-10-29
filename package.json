@@ -1,0 +1,22 @@
+{
+  "name": "qr-web-streamer",
+  "version": "1.0.0",
+  "description": "Real-time QR binary matrix streamer between devices via WebRTC DataChannel",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx dev.ts",
+    "server": "tsx server.ts",
+    "vite": "vite --host",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "tsx": "^4.7.0",
+    "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "@zxing/library": "^0.21.3",
+    "ws": "^8.16.0"
+  }
+}

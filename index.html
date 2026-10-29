@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Binary Matrix Real-Time Streamer</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.3rem;
+      color: var(--accent);
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.75rem;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background-color: var(--card-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background-color: rgba(56, 189, 248, 0.1);
+    }
+
+    .container {
+      display: none;
+      width: 100%;
+      max-width: 900px;
+      gap: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .container.active {
+      display: grid;
+    }
+
+    @media (max-width: 768px) {
+      .container.active {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .video-container, .canvas-container {
+      width: 100%;
+      aspect-ratio: 1;
+      background-color: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #0f172a;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background-color: #dc2626;
+    }
+
+    .btn-warning {
+      background-color: var(--warning);
+      color: #0f172a;
+    }
+
+    .info-panel {
+      width: 100%;
+      margin-top: 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: monospace;
+      border: 1px solid var(--border);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      color: var(--text-muted);
+    }
+
+    .value {
+      color: var(--accent);
+      word-break: break-all;
+      text-align: right;
+      max-width: 60%;
+    }
+
+    .status-badge {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--danger);
+      margin-right: 6px;
+    }
+
+    .status-badge.active {
+      background-color: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-badge.connecting {
+      background-color: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+    }
+
+    .session-box {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px dashed var(--accent);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .session-code {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.2rem;
+      color: var(--accent);
+      font-family: monospace;
+      margin: 0.5rem 0;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1.2rem;
+      text-align: center;
+      letter-spacing: 0.1rem;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-color);
+      text-transform: uppercase;
+      font-family: monospace;
+      margin-bottom: 1rem;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QR Binary Matrix Streamer</h1>
+    <p>Trasmissione in tempo reale via WebRTC DataChannel (P2P)</p>
+  </header>
+
+  <div class="mode-selector">
+    <button id="btn-mode-sender" class="mode-btn active">Trasmetti QR (Sender)</button>
+    <button id="btn-mode-receiver" class="mode-btn">Ricevi QR (Receiver)</button>
+  </div>
+
+  <!-- TRANSMITTER VIEW -->
+  <div id="view-sender" class="container active">
+    <div class="card">
+      <h2><span id="tx-status-badge" class="status-badge"></span> Sessione & Connessione</h2>
+      
+      <div class="session-box">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">CODICE DI SESSIONE</p>
+        <div id="tx-session-code" class="session-code">------</div>
+        <button id="btn-create-session" class="btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Crea Nuova Sessione</button>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-row"><span class="label">Stato:</span> <span id="tx-txt-status" class="value" style="color:var(--danger);">Inattivo</span></div>
+        <div class="info-row"><span class="label">Peer:</span> <span id="tx-txt-peer" class="value">In attesa di connessione</span></div>
+        <div class="info-row"><span class="label">Aggiornamenti inviati:</span> <span id="tx-txt-sent" class="value">0</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📷 Fotocamera & Scansione Locale</h2>
+      <div class="video-container">
+        <video id="video" autoplay playsinline muted></video>
+      </div>
+      <div class="controls">
+        <button id="btn-start" class="btn-primary" disabled>Avvia Fotocamera</button>
+        <button id="btn-stop" class="btn-danger" disabled>Ferma</button>
+      </div>
+      <div class="info-panel">
+        <div class="info-row"><span class="label">Ultimo Contenuto:</span> <span id="tx-txt-content" class="value">-</span></div>
+        <div class="info-row"><span class="label">Dimensioni:</span> <span id="tx-txt-dims" class="value">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIVER VIEW -->
+  <div id="view-receiver" class="container">
+    <div class="card">
+      <h2>🔗 Connessione alla Sessione</h2>
+      
+      <div style="width: 100%; margin-bottom: 1rem;">
+        <label for="input-session-code" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">INSERISCI CODICE</label>
+        <input type="text" id="input-session-code" placeholder="K7M4P9" maxlength="6" />
+        <button id="btn-join-session" class="btn-primary" style="width: 100%;">Connetti al Trasmettitore</button>
+      </div>
+
+      <div class="info-panel" style="margin-top: 1rem;">
+        <div class="info-row"><span class="label">Stato:</span> <span id="rx-txt-status" class="value" style="color:var(--danger);">Disconnesso</span></div>
+        <div class="info-row"><span class="label">Latenza E2E:</span> <span id="rx-txt-latency" class="value">-</span></div>
+        <div class="info-row"><span class="label">Pacchetti ricevuti:</span> <span id="rx-txt-received" class="value">0</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎨 QR Code Ricevuto in Tempo Reale</h2>
+      <div class="canvas-container">
+        <canvas id="qr-canvas"></canvas>
+      </div>
+      <div class="info-panel" style="margin-top: 1rem;">
+        <div class="info-row"><span class="label">Dimensioni:</span> <span id="rx-txt-dims" class="value">-</span></div>
+        <div class="info-row"><span class="label">Ultimo Aggiornamento:</span> <span id="rx-txt-time" class="value">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
